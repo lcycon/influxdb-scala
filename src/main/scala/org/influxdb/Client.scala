@@ -1,6 +1,7 @@
 package org.influxdb
 
-import org.json4s.jackson.Serialization
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
 import org.json4s.NoTypeHints
 import com.ning.http.client.{Response, AsyncHttpClient}
 import java.util.concurrent.{Future, TimeUnit}
@@ -10,7 +11,7 @@ import java.net.URLEncoder
 
 
 class Client(host: String = "localhost:8086", var username: String = "root", var password: String = "root", var database: String = "", schema: String = "http") {
-  implicit val formats = Serialization.formats(NoTypeHints)
+  implicit val formats = DefaultFormats
   private val httpClient = new AsyncHttpClient()
 
   var (timeout, unit) = (3, TimeUnit.SECONDS)
@@ -229,7 +230,8 @@ package object response {
   case class Response(json: String) {
     
     def toSeries: Array[Series] = {
-      val all = JSON.parseFull(json).get.asInstanceOf[List[Any]]
+      implicit val formats = DefaultFormats
+      val all = parse(json).extract[List[Any]]
       val series = new Array[Series](all.length)
 
       var i = 0
@@ -246,7 +248,8 @@ package object response {
     }
 
     def toSeriesMap: Array[SeriesMap] = {
-      val all = JSON.parseFull(json).get.asInstanceOf[List[Any]]
+      implicit val formats = DefaultFormats
+      val all = parse(json).extract[List[Any]]
       val series = new Array[SeriesMap](all.length)
 
       var i = 0
